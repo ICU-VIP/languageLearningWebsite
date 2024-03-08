@@ -1,0 +1,27 @@
+server:
+  port: 9091
+spring:
+  data:
+    redis:
+      host: 127.0.0.1
+      password: root3306
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/website
+    username: root
+    password: x5312523
+mybatis-flex:
+  type-aliases-package: org.cdtu.website.mapper
+  mapper-locations: classpath:mapper/*.xml
+
+file:
+  path: E:\设计专题\project\front\website\website\public\ico\
+
+review:
+  word:
+    count: 5
+
