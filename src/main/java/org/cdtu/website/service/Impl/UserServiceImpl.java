@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import org.cdtu.website.common.JwtUtil;
-import org.cdtu.website.common.ThreadLocalUtil;
 import org.cdtu.website.entity.HttpResult;
 import org.cdtu.website.entity.LoginUserDetails;
 import org.cdtu.website.entity.User;
@@ -15,17 +14,14 @@ import org.cdtu.website.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -68,7 +64,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                         user.getPassword()
                 );
 
-        String jwtToken = null;
+        String jwtToken;
         try {
             Authentication authentication =
                     authenticationManager.authenticate(authenticationToken);
@@ -123,4 +119,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                 .where(UserTableDef.USER.EMAIL.eq(email));
         return userMapper.selectOneByQuery(queryWrapper);
     }
+
+    @Override
+    public String getAvatar(Long id) {
+        return userMapper.selectOneByQueryAs(QueryWrapper.create()
+                .select(UserTableDef.USER.AVATAR)
+                .where(UserTableDef.USER.ID.eq(id)), String.class);
+    }
+
 }

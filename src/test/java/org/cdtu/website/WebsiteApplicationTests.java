@@ -1,28 +1,19 @@
 package org.cdtu.website;
 
 import com.mybatisflex.core.query.QueryWrapper;
-import com.mybatisflex.core.relation.RelationManager;
-import com.mybatisflex.core.row.Db;
-import org.apache.ibatis.cursor.Cursor;
 import org.cdtu.website.common.BitMapUtil;
 import org.cdtu.website.common.TempUtils;
 import org.cdtu.website.entity.*;
-import org.cdtu.website.entity.table.RolesTableDef;
 import org.cdtu.website.entity.table.UserTableDef;
 import org.cdtu.website.mapper.*;
 import org.cdtu.website.service.LearningRecordsService;
 import org.cdtu.website.service.UserService;
 import org.cdtu.website.service.WordsSetService;
 import org.junit.jupiter.api.Test;
-import org.junit.platform.commons.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.Arrays;
-import java.util.BitSet;
-import java.util.HashMap;
 import java.util.List;
 
 @SpringBootTest
@@ -161,5 +152,6 @@ class WebsiteApplicationTests {
         bitmap[1000] = -127;
         System.out.println(BitMapUtil.getBitCount(bitmap));
         System.out.println(Integer.bitCount(-127));
+
     }
 }

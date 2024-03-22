@@ -1,6 +1,6 @@
 package org.cdtu.website.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+
 import com.mybatisflex.core.service.IService;
 import org.cdtu.website.entity.HttpResult;
 import org.cdtu.website.entity.User;
@@ -11,4 +11,6 @@ public interface UserService extends IService<User> {
     Long getCurrentUserId();
 
     User getCurrentUser();
+
+    String getAvatar(Long id);
 }

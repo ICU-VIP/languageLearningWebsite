@@ -1,5 +1,6 @@
 package org.cdtu.website.entity;
 
+import com.mybatisflex.annotation.Column;
 import com.mybatisflex.annotation.Id;
 import com.mybatisflex.annotation.KeyType;
 import com.mybatisflex.annotation.Table;
@@ -16,7 +17,9 @@ public class Comments {
     private String content;
     private Long postId;
     private Long createUser;
+    @Column(onInsertValue = "now()")
     private LocalDateTime createTime;
     private Long updateUser;
+    @Column(onUpdateValue = "now()")
     private LocalDateTime updateTime;
 }

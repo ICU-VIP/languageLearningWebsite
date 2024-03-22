@@ -3,11 +3,13 @@ package org.cdtu.website.controller;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryWrapper;
 import org.cdtu.website.entity.AtomicProblem;
+import org.cdtu.website.entity.Experience;
 import org.cdtu.website.entity.HttpResult;
 import org.cdtu.website.entity.ProblemSet;
 import org.cdtu.website.entity.table.AtomicProblemTableDef;
 import org.cdtu.website.entity.table.UserTableDef;
 import org.cdtu.website.service.AtomicProblemService;
+import org.cdtu.website.service.ExperienceService;
 import org.cdtu.website.service.ProblemSetService;
 import org.cdtu.website.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,6 +39,13 @@ public class ProblemController {
     @Autowired
     public void setUserService(UserService userService) {
         this.userService = userService;
+    }
+
+    ExperienceService experienceService;
+
+    @Autowired
+    public void setExperienceService(ExperienceService experienceService) {
+        this.experienceService = experienceService;
     }
 
     @PostMapping("/saveAtomicProblem")
@@ -91,7 +100,7 @@ public class ProblemController {
     public HttpResult<Object> getProblemSet(@RequestParam Integer pageNum, @RequestParam Integer pageSize) {
         Page<ProblemSet> page = Page.of(pageNum, pageSize);
         problemSetService.page(page);
-        QueryWrapper queryWrapper = null;
+        QueryWrapper queryWrapper;
         // 添加创建者信息
         for (ProblemSet problemSet : page.getRecords()) {
             queryWrapper = QueryWrapper.create()
@@ -111,6 +120,17 @@ public class ProblemController {
                 .where(AtomicProblemTableDef.ATOMIC_PROBLEM.SET_ID.eq(id));
         problemSet.setAtomicProblems(atomicProblemService.list(queryWrapper));
         return HttpResult.success(problemSet);
+    }
+
+    @GetMapping("/finishProblemSet/{id}/{exp}")
+    public HttpResult<Object> finishProblemSet(@PathVariable Long id, @PathVariable Integer exp) {
+        //暂未实现答题记录
+        experienceService.save(Experience.builder()
+                .exp(exp)
+                .type(Experience.ANSWER_QUESTION)
+                .userId(userService.getCurrentUserId())
+                .build());
+        return HttpResult.success(null);
     }
 }
 

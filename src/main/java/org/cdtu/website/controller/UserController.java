@@ -1,13 +1,19 @@
 package org.cdtu.website.controller;
 
+import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryWrapper;
+import com.mybatisflex.core.relation.RelationManager;
+import com.mybatisflex.core.util.UpdateEntity;
 import org.cdtu.website.common.BitMapUtil;
 import org.cdtu.website.entity.HttpResult;
 import org.cdtu.website.entity.LearningRecords;
+import org.cdtu.website.entity.Roles;
 import org.cdtu.website.entity.User;
 import org.cdtu.website.entity.dto.PasswordDto;
 import org.cdtu.website.entity.table.UserTableDef;
 import org.cdtu.website.service.LearningRecordsService;
+import org.cdtu.website.service.RolesService;
+import org.cdtu.website.service.UserRolesService;
 import org.cdtu.website.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -19,7 +25,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Arrays;
-import java.util.Objects;
+import java.util.List;
 
 
 @RestController
@@ -46,11 +52,27 @@ public class UserController {
     public void setStringRedisTemplate(StringRedisTemplate stringRedisTemplate) {
         this.stringRedisTemplate = stringRedisTemplate;
     }
+
     private LearningRecordsService learningRecordsService;
 
     @Autowired
     public void setLearningRecordsService(LearningRecordsService learningRecordsService) {
         this.learningRecordsService = learningRecordsService;
+    }
+
+    private RolesService rolesService;
+
+
+    @Autowired
+    public void setRolesService(RolesService rolesService) {
+        this.rolesService = rolesService;
+    }
+
+    private UserRolesService userRolesService;
+
+    @Autowired
+    public void setUserRolesService(UserRolesService userRolesService) {
+        this.userRolesService = userRolesService;
     }
 
     @PostMapping("/register")
@@ -72,7 +94,8 @@ public class UserController {
             userService.save(user);
 
             //创建学习记录
-            LearningRecords learningRecords = new LearningRecords();
+            new LearningRecords();
+            LearningRecords learningRecords;
             Byte[] learningBitmap = new Byte[BitMapUtil.BITMAP_SIZE];
             Arrays.fill(learningBitmap, (byte) 0);
             learningRecords = new LearningRecords();
@@ -131,7 +154,8 @@ public class UserController {
         QueryWrapper queryWrapper = QueryWrapper.create()
                 .select()
                 .where(UserTableDef.USER.EMAIL.eq(email));
-        User user = userService.getOne(queryWrapper);
+        //User user = userService.getOne(queryWrapper);
+        User user = userService.getMapper().selectOneWithRelationsByQuery(queryWrapper);
         // User user = userService.findByUserName(username);
         //获得头像路径
         return HttpResult.success(user);
@@ -155,6 +179,11 @@ public class UserController {
         user.setAvatar(avatarUrl);
         userService.updateById(user);
         return HttpResult.success("修改成功");
+    }
+
+    @GetMapping("/getUserAvatar")
+    public HttpResult<Object> getUserAvatar(@RequestParam Long id) {
+        return HttpResult.success(userService.getAvatar(id));
     }
 
     @PostMapping("/updatePwd")
@@ -198,7 +227,8 @@ public class UserController {
         stringRedisTemplate.delete("loginToken:" + token);
         return HttpResult.success(null);
     }
-//    @PostMapping("/logout")
+
+    //    @PostMapping("/logout")
 //    public  HttpResult<Object> logout(@RequestParam String token) {
 //        System.out.println(token);
 //        System.out.println("*********************************zzz");
@@ -207,4 +237,75 @@ public class UserController {
 //                .msg("退出成功")
 //                .build();
 //    }
+    @GetMapping("/getUserPage")
+    public HttpResult<Object> userPage(@RequestParam String str, @RequestParam Integer type,
+                                       @RequestParam Integer pageNum, @RequestParam Integer pageSize) {
+        Page<User> page = Page.of(pageNum, pageSize);
+        QueryWrapper queryWrapper = QueryWrapper.create().select().orderBy(UserTableDef.USER.ACCOUNT_NON_LOCKED.desc());
+        if (type == 0 || type == 1) {
+            queryWrapper.where(UserTableDef.USER.USERNAME.like(str));
+        } else if (type == 2) {
+            queryWrapper.where(UserTableDef.USER.EMAIL.like(str));
+        }
+        return HttpResult.success(userService.page(page, queryWrapper));
+    }
+
+    @PatchMapping("/updateUserStatus/{id}")
+    public HttpResult<Object> lockUser(@PathVariable Long id, @RequestParam Boolean status) {
+        User user = UpdateEntity.of(User.class, id);
+        user.setAccountNonLocked(status);
+
+        return HttpResult.success(userService.updateById(user));
+    }
+
+
+    @PatchMapping("/updateUser")
+    public HttpResult<Object> updateUser(@RequestBody User user) {
+        return HttpResult.success(userService.updateById(user));
+    }
+
+
+    @PostMapping("/addRole")
+    public HttpResult<Object> addRole(@RequestBody Roles roles) {
+        rolesService.save(roles);
+        return HttpResult.success(null);
+    }
+
+    @DeleteMapping("/deleteRole/{id}")
+    public HttpResult<Object> deleteRole(@PathVariable Long id) {
+        rolesService.removeById(id);
+        return HttpResult.success(null);
+    }
+
+    @PutMapping("/updateRole")
+    public HttpResult<Object> updateRole(@RequestBody Roles roles) {
+        rolesService.updateById(roles);
+        return HttpResult.success(null);
+    }
+
+    @GetMapping("/getRolePage")
+    public HttpResult<Object> getRolePage(@RequestParam Integer pageNum, @RequestParam Integer pageSize) {
+        Page<Roles> page = Page.of(pageNum, pageSize);
+        return HttpResult.success(rolesService.page(page));
+    }
+
+    @GetMapping("/getAllRoles")
+    public HttpResult<Object> getAllRoles() {
+        return HttpResult.success(rolesService.list());
+    }
+
+    @GetMapping("/getUserRole/{id}")
+    public HttpResult<Object> getUserRole(@PathVariable Long id) {
+        QueryWrapper queryWrapper = QueryWrapper.create()
+                .select()
+                .where(UserTableDef.USER.ID.eq(id));
+        RelationManager.addQueryRelations("roles");
+        return HttpResult.success(userService.getMapper().selectOneWithRelationsByQuery(queryWrapper).getRoles());
+    }
+
+    @PutMapping("/updateUserRole/{id}")
+    public HttpResult<Object> updateUserRole(@PathVariable Long id, @RequestBody List<Long> roleIds) {
+        userRolesService.delAndUpdate(id, roleIds);
+        return HttpResult.success(null);
+    }
 }
